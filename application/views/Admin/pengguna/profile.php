@@ -17,7 +17,7 @@
 										</div>
 									</div>
 
-								<h3><?php echo $d->nama; $nik = $d->nik; $blokir= $d->blokir;$login=$d->last_login;?> <br> <small><?php echo pekerjaan($d->pekerjaan) ?></small></h3>
+								<h3><?php echo $d->nama; $nik = $d->nik;$point = $d->point; $blokir= $d->blokir;$login=$d->last_login;?> <br> <small><?php echo pekerjaan($d->pekerjaan) ?></small></h3>
 								<?php endforeach; ?>
 							</div><!--end .col -->
 							<div class="col-md-9 col-xs-7">
@@ -126,6 +126,15 @@
 														</div>
 													</div><!--end .card-body -->
 												</div><!--end .card -->
+												<div class="card">
+													<div class="card-body no-padding">
+														<div class="alert alert-callout alert-warning no-margin">
+															<strong class="pull-right text-success text-lg"><img src="<?php echo base_url('assets/img/point.png') ?>" alt="point" style="height:30px;"></strong>
+															<strong class="text-xl"><?php echo $point ?></strong><br/>
+															<span class="opacity-50">Point</span>
+														</div>
+													</div>
+												</div>
 											</div><!--end .col -->
 											<!-- END ALERT - REVENUE -->
 
