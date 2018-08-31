@@ -106,7 +106,18 @@ function tampil_icon($id,$a)
     }
   }
 }
-
+function point_saya($id)
+{
+  $ci =& get_instance();
+  $ci->load->database();
+  $result = $ci->db->select('*')
+                    ->from('tb_user')
+                    ->where('id_user',$id)
+                    ->get();
+  foreach ($result->result() as $c) {
+    return $c->point;
+  }
+}
 function replace_petik($text)
 {
   $string =str_replace("'", "",$text);

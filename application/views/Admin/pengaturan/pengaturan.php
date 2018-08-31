@@ -117,6 +117,7 @@
             </div><!--end .card-body -->
             <div class="card-actionbar">
               <div class="card-actionbar-row">
+                <input type="hidden" name="hal" value="1">
                 <button type="submit" id="btn_point" class="btn btn-flat btn-primary ink-reaction">Simpan</button>
               </div>
             </div>
@@ -158,6 +159,7 @@
             </div><!--end .card-body -->
             <div class="card-actionbar">
               <div class="card-actionbar-row">
+                <input type="hidden" name="hal" value="1">
                 <button type="submit" id="btn_simpan_hadiah" class="btn btn-flat btn-primary ink-reaction">Simpan</button>
                 <button type="button" id="btn_batal_hadiah" class="btn btn-flat btn-danger ink-reaction" style="display:none;">Batal</button>
               </div>

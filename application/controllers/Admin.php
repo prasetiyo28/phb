@@ -1886,6 +1886,24 @@ public function notifChat()
 			);
 		$this->template->admin('Admin/pengaturan/pengaturan',$data);
 	}
+	public function point()
+	{
+		$server_load = array('load_name' => 'kunjungan','load_date'=> date('Y-m-d H:i:s'),'flag'=>'1' );
+		$this->M_admin->insert_data('tb_server_load',$server_load);
+
+		$this->session->unset_userdata(array('iduser'));
+
+		$data = array(
+			'chart' => false,
+			'map'=>false,
+			'kunjungan' => count($this->db->where('flag','1')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
+			'login_user' => count($this->db->where('flag','2')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
+			'login_admin' => count($this->db->where('flag','3')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
+			'tukar_point' => $this->db->from('tb_tukar_point')->like('cdate',date('Y')."-")->get()->result(),
+			'hadiah' => $this->M_admin->get_where('tb_hadiah_point',array('del_flag' =>'1'))->result(),
+			);
+		$this->template->admin('Admin/point/point',$data);
+	}
 	public function edit_sensor($id)
 	{
 		$dt = $this->M_admin->get_by_id_ajax_api('tb_sensor_text','id_sensor',$id);
@@ -1912,10 +1930,19 @@ public function notifChat()
 			$this->M_admin->insert_data('tb_log',$log_aktifitas);
 
 			$this->session->set_flashdata('alert','toastr.info("Berhasil menambahkan data hadiah point.", "");');
-			redirect(base_url('Admin/pengaturan'));
+			if ($this->input->post('hal')=='1') {
+				redirect(base_url('Admin/pengaturan'));
+			}else {
+				redirect(base_url('Admin/point'));
+			}
+
 		}else {
 			$this->session->set_flashdata('alert','toastr.info("Gagal menambahkan data hadiah point.", "");');
-			redirect(base_url('Admin/pengaturan'));
+			if ($this->input->post('hal')=='1') {
+				redirect(base_url('Admin/pengaturan'));
+			}else {
+				redirect(base_url('Admin/point'));
+			}
 		}
 	}
 	public function tambah_sensor()
@@ -1991,10 +2018,18 @@ public function notifChat()
 			$this->M_admin->insert_data('tb_log',$log_aktifitas);
 
 			$this->session->set_flashdata('alert','toastr.info("Berhasil memperbaharui data hadiah point.", "");');
-			redirect(base_url('Admin/pengaturan'));
+			if ($this->input->post('hal')=='1') {
+				redirect(base_url('Admin/pengaturan'));
+			}else {
+				redirect(base_url('Admin/point'));
+			}
 		}else {
 			$this->session->set_flashdata('alert','toastr.info("Gagal memperbaharui data hadiah point.", "");');
-			redirect(base_url('Admin/pengaturan'));
+			if ($this->input->post('hal')=='1') {
+				redirect(base_url('Admin/pengaturan'));
+			}else {
+				redirect(base_url('Admin/point'));
+			}
 		}
 	}
 	public function update_blok()
@@ -2036,6 +2071,26 @@ public function notifChat()
 		if ($update) {
 			//log aktifitas
 			$log_aktifitas = array( 'keterangan'=>'Menghapus data hadiah point','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+			$this->M_admin->insert_data('tb_log',$log_aktifitas);
+
+			echo "sukses";
+		}else {
+			echo "gagal";
+		}
+	}
+	public function tukarAct()
+	{
+		if ($this->input->post('str')=='1') {
+			$data = array('flag_status' => '1' );
+			$ket ='Menerima penukaran point';
+		}else {
+			$data = array('flag_status' => '2' );
+			$ket ='Menolak penukaran point';
+		}
+		$update = $this->M_admin->update_data(array('id_tukar_point' => $this->input->post('id')),$data,'tb_tukar_point');
+		if ($update) {
+			//log aktifitas
+			$log_aktifitas = array( 'keterangan'=>$ket,'nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
 			$this->M_admin->insert_data('tb_log',$log_aktifitas);
 
 			echo "sukses";
@@ -2206,10 +2261,18 @@ public function notifChat()
 			$this->M_admin->insert_data('tb_log',$log_aktifitas);
 
 			$this->session->set_flashdata('alert','toastr.info("Berhasil memperbaharui point.", "");');
-			redirect(base_url('Admin/pengaturan'));
+			if ($this->input->post('hal')=='1') {
+				redirect(base_url('Admin/pengaturan'));
+			}else {
+				redirect(base_url('Admin/point'));
+			}
 		}else {
 			$this->session->set_flashdata('alert','toastr.info("Gagal memperbaharui point.", "");');
-			redirect(base_url('Admin/pengaturan'));
+			if ($this->input->post('hal')=='1') {
+				redirect(base_url('Admin/pengaturan'));
+			}else {
+				redirect(base_url('Admin/point'));
+			}
 		}
 
 	}

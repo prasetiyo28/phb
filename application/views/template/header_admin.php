@@ -92,7 +92,8 @@
             </span>
           </a>
           <ul class="dropdown-menu animation-dock">
-            <li class="dropdown-header">Config</li>
+            <li class="dropdown-header">Submenu</li>
+            <li><a href="<?php echo base_url('Admin/point/') ?>">Point</a></li>
             <li><a href="<?php echo base_url('Admin/myprofile/') ?>">Profil</a></li>
             <li><a href="<?php echo base_url('Admin/blog/') ?>">Blog <?php if (ttl_blog_today()!=0): ?>
               <span class="badge style-danger pull-right"><?php echo ttl_blog_today() ?></span>

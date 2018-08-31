@@ -148,7 +148,8 @@
             </span>
           </a>
           <ul class="dropdown-menu animation-dock">
-            <li class="dropdown-header">Config</li>
+            <li class="dropdown-header">Submenu</li>
+            <li><a href="<?php echo base_url('User/point/') ?>">Point <span class="badge style-warning pull-right"><?php echo point_saya($this->session->userdata('id')) ?></span></a></li>
             <li><a href="<?php echo base_url('User/profile/') ?>">Profil</a></li>
             <li><a href="<?php echo base_url('User/blog/') ?>">Blog <?php if (ttl_blog_today()!=0): ?>
               <span class="badge style-danger pull-right"><?php echo ttl_blog_today() ?></span>
