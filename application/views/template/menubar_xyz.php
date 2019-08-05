@@ -40,7 +40,14 @@
           <div class="gui-icon"><i class="md md-group"></i></div>
           <span class="title">Pengguna</span>
         </a>
-      </li><!--end /menu-li -->
+      </li>
+      <li>
+        <a href="<?php echo base_url('Xyz/wirausahawan'); ?>" >
+          <div class="gui-icon"><i class="md md-store"></i></div>
+          <span class="title">Wirausahawan</span>
+        </a>
+      </li>
+      <!--end /menu-li -->
       <!-- END USER -->
 
       <!-- BEGIN EMAIL -->

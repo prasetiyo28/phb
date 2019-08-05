@@ -21,6 +21,11 @@
           </a>
         </li><!--end .dropdown -->
         <li>
+          <a href="<?php echo base_url('Frontend/toko') ?>" class="btn btn-icon-toggle btn-default" title="Toko">
+            <i class="md md-store"></i>
+          </a>
+        </li><!--end .dropdown -->
+        <li>
           <a href="<?php echo base_url('Frontend/blog') ?>" class="btn btn-icon-toggle btn-default" title="Berita">
             <i class="fa fa-newspaper-o"></i>
             <?php if (ttl_blog_bybidang('0')!=0 ): ?>

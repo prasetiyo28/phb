@@ -93,12 +93,15 @@
           </a>
           <ul class="dropdown-menu animation-dock">
             <li class="dropdown-header">Submenu</li>
-            <li><a href="<?php echo base_url('Admin/point/') ?>">Point</a></li>
+            <li><a href="<?php echo base_url('Admin/point/') ?>">Point <?php if (notif_trans_point()!=0): ?>
+              <span class="badge style-danger pull-right"><?php echo notif_trans_point() ?></span>
+            <?php endif; ?></a></li>
             <li><a href="<?php echo base_url('Admin/myprofile/') ?>">Profil</a></li>
             <li><a href="<?php echo base_url('Admin/blog/') ?>">Blog <?php if (ttl_blog_today()!=0): ?>
               <span class="badge style-danger pull-right"><?php echo ttl_blog_today() ?></span>
             <?php endif; ?></a></li>
             <li class="divider"></li>
+            <li><a href="<?php echo base_url('Admin/bantuan/') ?>"><i class="fa fa-question-circle"></i> Bantuan</a></li>
             <li><a href="<?php echo base_url('Auth/locked/') ?>"><i class="fa fa-fw fa-lock"></i> Lock</a></li>
             <li><a href="<?php echo base_url('Auth/logout');?>"><i class="fa fa-fw fa-power-off text-danger"></i> Logout</a></li>
           </ul><!--end .dropdown-menu -->

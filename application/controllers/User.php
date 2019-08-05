@@ -34,7 +34,7 @@ class User extends CI_Controller {
 				$s='-';
 			}
 			$dt_produksi = count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'1')->result());
-			 array_push($ub_produksi,$dt_produksi);
+			array_push($ub_produksi,$dt_produksi);
 		}
 		$date=date('Y-m-d');
 		$data = array(
@@ -48,7 +48,7 @@ class User extends CI_Controller {
 			'total_user_l'=>count($this->M_admin->get_where('tb_user',array('del_flag' =>'1','jk'=>'L','pekerjaan'=>$this->session->userdata('bidang'), 'id_kab'=> $this->session->userdata('id_kab') ))->result()),
 			'total_user_p'=>count($this->M_admin->get_where('tb_user',array('del_flag' =>'1','jk'=>'P','pekerjaan'=>$this->session->userdata('bidang'), 'id_kab'=> $this->session->userdata('id_kab') ))->result()),
 
-			);
+		);
 		$this->template->user('User/dashboard/dashboard',$data);
 	}
 	public function peta()
@@ -64,7 +64,7 @@ class User extends CI_Controller {
 			'login_user' => count($this->db->where('flag','2')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
 			'login_admin' => count($this->db->where('flag','3')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
 			'icon' => $this->M_admin->get_where('tb_icon_map',array('del_flag' =>'1'))->result(),
-			);
+		);
 		$this->template->user('User/peta/peta',$data);
 	}
 	public function insert_produksi()
@@ -92,8 +92,15 @@ class User extends CI_Controller {
 		$insert = $this->M_admin->insert_data('tb_produksi',$data);
 		if ($insert) {
 			//log aktifitas
-      $log_aktifitas = array( 'keterangan'=>'Menambahkan produksi baru','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
-  		$this->M_admin->insert_data('tb_log',$log_aktifitas);
+			$log_aktifitas = array( 'keterangan'=>'Menambahkan produksi baru','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+			$this->M_admin->insert_data('tb_log',$log_aktifitas);
+
+			//update point
+			$user = $this->M_admin->get_by_id_row('tb_user',array('id_user'=>$this->session->userdata('id')));
+			$admin = $this->db->limit(1)->get_where('tb_admin',array('id_kab' => $this->session->userdata('id_kab'), 'del_flag'=>'1' ))->row();
+			$cpoint = $this->db->get_where('tb_config_point',array('id_admin' => $admin->id_admin))->row();
+			$sisa = $user->point + $cpoint->point;
+			$this->M_admin->update_data(array('id_user' => $this->session->userdata('id')),array('point'=>$sisa),'tb_user');
 
 			$this->session->set_flashdata('alert','toastr.info("Berhasil menambahkan produksi baru.", "");');
 			redirect(base_url('User/peta'));
@@ -101,6 +108,26 @@ class User extends CI_Controller {
 			$this->session->set_flashdata('alert','toastr.error("Gagal menambahkan produksi baru.", "");');
 			redirect(base_url('User/peta'));
 		}
+	}
+
+	public function tambah_catatan($value='')
+	{
+		$data['id_user'] = $this->session->userdata('id');
+		$data['id_produksi'] = $this->input->post('id_produksi');
+		$data['catatan'] = $this->input->post('catatan');
+
+		if ($data['catatan']=="other") {
+			$data['catatan'] = $this->input->post('catatan2');			
+		}else{
+			$data['catatan'] = $this->input->post('catatan');			
+		}
+
+		$data['pengeluaran'] = $this->input->post('pengeluaran');
+
+		$this->M_admin->insert_data('tb_catatan',$data);
+		redirect('User/catatan/');
+
+
 	}
 	public function get_all_user_ajax()
 	{
@@ -183,8 +210,8 @@ class User extends CI_Controller {
 		$update = $this->M_admin->update_data(array('id_produksi' => $this->input->post('id_produksi')),$data,'tb_produksi');
 		if ($update) {
 			//log aktifitas
-      $log_aktifitas = array( 'keterangan'=>'Menghapus data produksi','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
-  		$this->M_admin->insert_data('tb_log',$log_aktifitas);
+			$log_aktifitas = array( 'keterangan'=>'Menghapus data produksi','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+			$this->M_admin->insert_data('tb_log',$log_aktifitas);
 
 			echo "sukses";
 		}else {
@@ -194,8 +221,8 @@ class User extends CI_Controller {
 	public function edit_produksi($id)
 	{
 		$data = array('icon' => $this->M_admin->get_where('tb_icon_map',array('del_flag' =>'1'))->result(),
-		'data'=>$this->M_admin->get_by_id_bidang($id)->result(),
- 					);
+			'data'=>$this->M_admin->get_by_id_bidang($id)->result(),
+		);
 
 		$tampil= $this->load->view('User/peta/canvas_detail',$data );
 		return $tampil;
@@ -203,8 +230,8 @@ class User extends CI_Controller {
 	public function detail_produksi($id)
 	{
 		$data = array('icon' => $this->M_admin->get_where('tb_icon_map',array('del_flag' =>'1'))->result(),
-		'data'=>$this->M_admin->get_by_id_bidang($id)->result(),
-					);
+			'data'=>$this->M_admin->get_by_id_bidang($id)->result(),
+		);
 
 		$tampil= $this->load->view('User/peta/canvas_detail_lihat',$data);
 		return $tampil;
@@ -212,12 +239,12 @@ class User extends CI_Controller {
 	public function update_peta_produksi()
 	{
 		$data = array(
-						'lt' => $this->input->post('lt') ,
-						'lg' => $this->input->post('lg'),
-						'lokasi' => $this->input->post('lokasi'),
-						'mdate'=> date('Y-m-d H:i:s'),
-						'm_by'=> $this->session->userdata('level')." - ".$this->session->userdata('nama')
-					);
+			'lt' => $this->input->post('lt') ,
+			'lg' => $this->input->post('lg'),
+			'lokasi' => $this->input->post('lokasi'),
+			'mdate'=> date('Y-m-d H:i:s'),
+			'm_by'=> $this->session->userdata('level')." - ".$this->session->userdata('nama')
+		);
 		$update = $this->M_admin->update_data(array('id_produksi' => $this->input->post('id')),$data,'tb_produksi');
 		if ($update) {
 			//log aktifitas
@@ -260,6 +287,64 @@ class User extends CI_Controller {
 			redirect(base_url('User/peta'));
 		}
 	}
+	public function catatan()
+	{
+		$server_load = array('load_name' => 'kunjungan','load_date'=> date('Y-m-d H:i:s'),'flag'=>'1' );
+		$this->M_admin->insert_data('tb_server_load',$server_load);
+		$id = $this->session->userdata('id');
+		$user = $this->M_admin->get_where('tb_user',array('id_user' => $id, 'del_flag'=>'1' ))->row();
+		if (!empty($id)) {
+			$p_panen= array();
+
+			$sampai = date('n');
+
+			for ($i=1; $i <= $sampai; $i++) {
+				if ($i<= 9) {
+					$s='-0';
+				}else {
+					$s='-';
+				}
+				$dt_p_panen = count($this->M_admin->get_all_by_iduser($user->id_user,date('Y').$s.$i)->result());
+				array_push($p_panen,$dt_p_panen);
+			}
+
+			$data = array(
+				'chart' => true,
+				'map'=>true,
+				'kunjungan' => count($this->db->where('flag','1')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
+				'login_user' => count($this->db->where('flag','2')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
+				'login_admin' => count($this->db->where('flag','3')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
+				'data' => $this->M_admin->get_where('tb_user',array('del_flag' =>'1','id_user'=>$id ))->result(),
+				'prov'=>$this->M_admin->get_all_provinsi(),
+				'username' => $user->username,
+				'id'=>$user->id_user,
+				'foto'=>$user->foto,
+				'url'=>base_url('User/update_akun_user'),
+				'url_foto'=>base_url('User/update_foto_user'),
+				'produksi'=> $this->M_admin->get_all_lap_produksi_by_iduser2($id)->result(),
+				'produksi_select'=> $this->M_admin->get_all_select_produksi($id)->result(),
+				'p_panen'=>$p_panen,
+				'catatan'=>$this->M_admin->ambil_catatan($id,'10s',null)->result(),
+				'panen'=>$this->M_admin->ambil_history_panen($id,'5',null)->result(),
+				'log'=>$this->M_admin->ambil_log_user('10', null),
+
+			);
+			$this->template->user('User/pengguna/catatan',$data);
+
+			// echo json_encode($data['catatan']);
+		}else {
+			$data = array(
+				'chart' => false,
+				'map'=>false,
+				'kunjungan' => count($this->db->where('flag','1')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
+				'login_user' => count($this->db->where('flag','2')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
+				'login_admin' => count($this->db->where('flag','3')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
+			);
+			$this->template->user('template/error_404',$data);
+		}
+
+	}
+
 	public function profile()
 	{
 		$server_load = array('load_name' => 'kunjungan','load_date'=> date('Y-m-d H:i:s'),'flag'=>'1' );
@@ -278,7 +363,7 @@ class User extends CI_Controller {
 					$s='-';
 				}
 				$dt_p_panen = count($this->M_admin->get_all_by_iduser($user->id_user,date('Y').$s.$i)->result());
-				 array_push($p_panen,$dt_p_panen);
+				array_push($p_panen,$dt_p_panen);
 			}
 
 			$data = array(
@@ -299,7 +384,7 @@ class User extends CI_Controller {
 				'panen'=>$this->M_admin->ambil_history_panen($id,'5',null)->result(),
 				'log'=>$this->M_admin->ambil_log_user('10', null),
 
-				);
+			);
 			$this->template->user('User/pengguna/profile',$data);
 		}else {
 			$data = array(
@@ -308,17 +393,18 @@ class User extends CI_Controller {
 				'kunjungan' => count($this->db->where('flag','1')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
 				'login_user' => count($this->db->where('flag','2')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
 				'login_admin' => count($this->db->where('flag','3')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
-				);
+			);
 			$this->template->user('template/error_404',$data);
 		}
 
 	}
+
 	public function scroll_history_panen($str=NULL)
 	{
 		$jml  = $this->M_admin->get_all_produksi_by_iduser($this->session->userdata('id'))->num_rows();
 		$data = array(
 			'panen'=>$this->M_admin->ambil_history_panen($this->session->userdata('id'),'5',$str)->result(),
-			);
+		);
 		if ($str>=$jml) {
 			echo "0";
 		}else {
@@ -332,7 +418,7 @@ class User extends CI_Controller {
 		$jml  = $this->db->order_by('id_log','DESC')->get_where('tb_log',$where)->num_rows();
 		$data = array(
 			'log'=>$this->M_admin->ambil_log_user2('10', $str),
-			);
+		);
 		if ($str>=$jml) {
 			echo "0";
 		}else {
@@ -356,181 +442,215 @@ class User extends CI_Controller {
 				$this->load->view('User/pengguna/tabel_produksi',$data);
 			}
 
-	}
-	public function cari_lap_pericon($icon=null,$tahun=null)
-	{
-		$id = $this->session->userdata('id');
-		$user = $this->M_admin->get_where('tb_user',array('id_user' => $id, 'del_flag'=>'1' ))->row();
+		}
+		public function cari_lap_pericon($icon=null,$tahun=null)
+		{
+			$id = $this->session->userdata('id');
+			$user = $this->M_admin->get_where('tb_user',array('id_user' => $id, 'del_flag'=>'1' ))->row();
 
-				$data['produksi']= $this->M_admin->get_all_lap_produksi_by_iduser_by_icon($id,$tahun,$icon)->result();
-				$this->load->view('User/pengguna/tabel_produksi',$data);
+			$data['produksi']= $this->M_admin->get_all_lap_produksi_by_iduser_by_icon($id,$tahun,$icon)->result();
+			$this->load->view('User/pengguna/tabel_produksi',$data);
 
-	}
-	public function cari_lap_indeks($icon=null,$jenis=null,$tahun=null)
-	{
+		}
+		public function cari_lap_indeks($icon=null,$jenis=null,$tahun=null)
+		{
 
 		// $id = $this->session->userdata('iduser');
 		// $user = $this->M_admin->get_where('tb_user',array('id_user' => $id, 'del_flag'=>'1' ))->row();
-		$bidang = $this->session->userdata('pekerjaan') ;
-		$ic = $this->M_admin->get_where('tb_icon_map',array('id_icon' => $icon, 'del_flag'=>'1' ))->row();
+			$bidang = $this->session->userdata('pekerjaan') ;
+			$ic = $this->M_admin->get_where('tb_icon_map',array('id_icon' => $icon, 'del_flag'=>'1' ))->row();
 
 
-		$produksi= array();
-		for ($i=1; $i <= 12; $i++) {
-			if ($i<= 9) {
-				$o='-0';
-			}else {
-				$o='-';
-			}
-			if ($jenis==1) {
-				$this->db->select_max('harga_perkilo_panen');
-				$result = $this->db->like('tgl_panen',$tahun.$o.$i)->where('id_icon',$icon)->where('del_flag','1')->where('panen_flag','1')->where('bidang',$bidang)->get('tb_produksi')->row();
-				if (!empty($result->harga_perkilo_panen)) {
-					array_push($produksi,$result->harga_perkilo_panen);
+			$produksi= array();
+			for ($i=1; $i <= 12; $i++) {
+				if ($i<= 9) {
+					$o='-0';
 				}else {
-					array_push($produksi,'0');
+					$o='-';
 				}
-			}elseif ($jenis==2) {
-				$dt_produksi = count($this->M_admin->get_like_where('tb_produksi','tgl_tanam',$tahun.$o.$i,array('del_flag' =>'1' ,'bidang'=>$bidang, 'id_icon'=> $icon))->result());
-				 array_push($produksi,$dt_produksi);
-			}elseif ($jenis==3) {
-				$dt_produksi = count($this->M_admin->get_like_where('tb_produksi','tgl_panen',$tahun.$o.$i,array('del_flag' =>'1' ,'bidang'=>$bidang,'id_icon'=> $icon , 'panen_flag'=>'1'))->result());
-				 array_push($produksi,$dt_produksi);
-			}else {
-				$dt_produksi = count($this->M_admin->get_like_where('tb_produksi','tgl_panen',$tahun.$o.$i,array('del_flag' =>'1' ,'bidang'=>$bidang,'id_icon'=> $icon , 'panen_flag'=>'2'))->result());
-				 array_push($produksi,$dt_produksi);
+				if ($jenis==1) {
+					$this->db->select_max('harga_perkilo_panen');
+					$result = $this->db->like('tgl_panen',$tahun.$o.$i)->where('id_icon',$icon)->where('del_flag','1')->where('panen_flag','1')->where('bidang',$bidang)->get('tb_produksi')->row();
+					if (!empty($result->harga_perkilo_panen)) {
+						array_push($produksi,$result->harga_perkilo_panen);
+					}else {
+						array_push($produksi,'0');
+					}
+				}elseif ($jenis==2) {
+					$dt_produksi = count($this->M_admin->get_like_where('tb_produksi','tgl_tanam',$tahun.$o.$i,array('del_flag' =>'1' ,'bidang'=>$bidang, 'id_icon'=> $icon))->result());
+					array_push($produksi,$dt_produksi);
+				}elseif ($jenis==3) {
+					$dt_produksi = count($this->M_admin->get_like_where('tb_produksi','tgl_panen',$tahun.$o.$i,array('del_flag' =>'1' ,'bidang'=>$bidang,'id_icon'=> $icon , 'panen_flag'=>'1'))->result());
+					array_push($produksi,$dt_produksi);
+				}else {
+					$dt_produksi = count($this->M_admin->get_like_where('tb_produksi','tgl_panen',$tahun.$o.$i,array('del_flag' =>'1' ,'bidang'=>$bidang,'id_icon'=> $icon , 'panen_flag'=>'2'))->result());
+					array_push($produksi,$dt_produksi);
+				}
+
 			}
 
-		}
-
-		if ($bidang=='1') {
-			$label='Pertanian';
-		}elseif ($bidang=='2') {
-			$label='Perikanan';
-		}else {
-			$label='Peternakan';
-		}
-		if ($jenis=='1') {
-			$title = 'Harga tertinggi perkilo / ekor';
-		}elseif ($jenis=='2') {
-			$title = 'penanaman';
-		}elseif ($jenis=='3') {
-			$title = 'Panen';
-		}else {
-			$title = 'Gagal panen';
-		}
+			if ($bidang=='1') {
+				$label='Pertanian';
+			}elseif ($bidang=='2') {
+				$label='Perikanan';
+			}else {
+				$label='Peternakan';
+			}
+			if ($jenis=='1') {
+				$title = 'Harga tertinggi perkilo / ekor';
+			}elseif ($jenis=='2') {
+				$title = 'penanaman';
+			}elseif ($jenis=='3') {
+				$title = 'Panen';
+			}else {
+				$title = 'Gagal panen';
+			}
 
 
 
-		$data = array(
-			'produksi'=>$produksi,
-			'label'=> $label,
-			'title' => $title,
-			'icon'=>array($ic->icon,$ic->nama ),
-		);
-		$this->load->view('Xyz/laporan/grafik_indeks',$data);
+			$data = array(
+				'produksi'=>$produksi,
+				'label'=> $label,
+				'title' => $title,
+				'icon'=>array($ic->icon,$ic->nama ),
+			);
+			$this->load->view('Xyz/laporan/grafik_indeks',$data);
 		// echo json_encode($data);
 
-	}
-	public function konfirmasi_panen()
-	{
-		$data = array(
-								'tgl_panen' => date('Y-m-d',strtotime($this->input->post('tgl_panen'))),
-								'jml_panen' =>$this->input->post('jml_panen'),
-								'jml_pupuk' =>$this->input->post('jml_pupuk'),
-								'harga_perkilo_panen' =>$this->input->post('harga_perkilo_panen'),
-								'nilai_panen' =>$this->input->post('nilai_panen'),
-								'ket' =>sensor_text($this->input->post('ket')),
-								'mdate'=> date('Y-m-d H:i:s'),
-								'm_by'=> $this->session->userdata('level')." - ".$this->session->userdata('nama'),
-								'panen_flag'=> '1',
-		);
-		$update = $this->M_admin->update_data(array('id_produksi' => $this->input->post('id_produksi')),$data,'tb_produksi');
-		if ($update) {
-			//log aktifitas
-			$log_aktifitas = array( 'keterangan'=>'Melakukan konfirmasi panen produksi','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
-			$this->M_admin->insert_data('tb_log',$log_aktifitas);
-
-			$this->session->set_flashdata('alert','toastr.success("Berhasil melakukan konfirmasi panen produksi.", "");');
-			$this->session->set_flashdata('selamat','selamat();');
-			redirect(base_url('User/profile'));
-		}else {
-			$this->session->set_flashdata('alert','toastr.danger("Gagal melakukan konfirmasi panen produksi.", "");');
-			redirect(base_url('User/profile'));
 		}
 
-	}
-	public function konfirmasi_gagal()
-	{
-		$data = array(
-								'tgl_panen' => date('Y-m-d',strtotime($this->input->post('tgl_panen'))),
-								'jml_panen' =>$this->input->post('jml_panen'),
-								'harga_perkilo_panen' =>$this->input->post('harga_perkilo_panen'),
-								'nilai_panen' =>$this->input->post('nilai_panen'),
-								'ket' =>sensor_text($this->input->post('ket')),
-								'mdate'=> date('Y-m-d H:i:s'),
-								'm_by'=> $this->session->userdata('level')." - ".$this->session->userdata('nama'),
-								'panen_flag'=> '2',
-		);
-		$update = $this->M_admin->update_data(array('id_produksi' => $this->input->post('id_produksi1')),$data,'tb_produksi');
-		if ($update) {
-			//log aktifitas
-			$log_aktifitas = array( 'keterangan'=>'Melakukan konfirmasi panen produksi','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
-			$this->M_admin->insert_data('tb_log',$log_aktifitas);
-
-			$this->session->set_flashdata('alert','toastr.success("Berhasil melakukan konfirmasi panen produksi.", "");');
-			$this->session->set_flashdata('selamat','sedih();');
-			redirect(base_url('User/profile'));
-		}else {
-			$this->session->set_flashdata('alert','toastr.danger("Gagal melakukan konfirmasi panen produksi.", "");');
-			redirect(base_url('User/profile'));
+		public function cek_catatan($value='')
+		{
+			$keuangan = $this->M_admin->get_keuangan($this->input->post('id_produksi'))->row();
+			echo intval($keuangan->pengeluaran);
 		}
+		public function konfirmasi_panen()
+		{
 
-	}
-	public function modal_ktp($foto,$id,$par)
-	{
-		$data['foto_ktp']=$foto;
-		$data['par']=$par;
-		$data['id']=$id;
-		$tampilan = $this->load->view('User/pengguna/modal_ktp',$data, TRUE);
-		echo $tampilan;
-	}
-	public function update_peta()
-	{
-		$data = array(
-			'lt' => $this->input->post('lt'),
-			'lg'=>$this->input->post('lg'),
-			'mdate'=>date('Y-m-d H:i:s'),
-			'm_by' =>$this->session->userdata('level')." - ".$this->session->userdata('nama'),
+			$keuangan = $this->M_admin->get_keuangan($this->input->post('id_produksi'))->row();
+			$labarugi = intval($this->input->post('nilai_panen')) - intval($keuangan->pengeluaran);
+			
 
-		 );
-		$update = $this->M_admin->update_data(array('id_user' => $this->input->post('id')),$data,'tb_user');
-		if ($update) {
+			if ($labarugi > 0) {
+				$status = 'Laba';
+			}else{
+				$status = 'Rugi';
+			}
+
+
+			$data = array(
+				'tgl_panen' => date('Y-m-d',strtotime($this->input->post('tgl_panen'))),
+				'jml_panen' =>$this->input->post('jml_panen'),
+				'jml_pupuk' =>$this->input->post('jml_pupuk'),
+				'harga_perkilo_panen' =>$this->input->post('harga_perkilo_panen'),
+				'nilai_panen' =>$this->input->post('nilai_panen'),
+				'ket' =>sensor_text($this->input->post('ket')),
+				'mdate'=> date('Y-m-d H:i:s'),
+				'status'=> $status,
+				'pengeluaran'=> $keuangan->pengeluaran,
+				'm_by'=> $this->session->userdata('level')." - ".$this->session->userdata('nama'),
+				'panen_flag'=> '1',
+			);
+			$update = $this->M_admin->update_data(array('id_produksi' => $this->input->post('id_produksi')),$data,'tb_produksi');
+			if ($update) {
 			//log aktifitas
-			$log_aktifitas = array( 'keterangan'=>'Memperbaharui lokasi peta pengguna','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
-			$this->M_admin->insert_data('tb_log',$log_aktifitas);
+				$log_aktifitas = array( 'keterangan'=>'Melakukan konfirmasi panen produksi','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+				$this->M_admin->insert_data('tb_log',$log_aktifitas);
 
-			$this->session->set_flashdata('alert','toastr.success("Berhasil memperbaharui lokasi peta.", "");');
-			redirect(base_url('User/profile'));
-		}else {
-			$this->session->set_flashdata('alert','toastr.danger("Gagal memperbaharui lokasi peta.", "");');
-			redirect(base_url('User/profile'));
+			//update point
+				$user = $this->M_admin->get_by_id_row('tb_user',array('id_user'=>$this->session->userdata('id')));
+				$admin = $this->db->limit(1)->get_where('tb_admin',array('id_kab' => $this->session->userdata('id_kab'), 'del_flag'=>'1' ))->row();
+				$cpoint = $this->db->get_where('tb_config_point',array('id_admin' => $admin->id_admin))->row();
+				$sisa = $user->point + $cpoint->point;
+				$this->M_admin->update_data(array('id_user' => $this->session->userdata('id')),array('point'=>$sisa),'tb_user');
+
+				$this->session->set_flashdata('alert','toastr.success("Berhasil melakukan konfirmasi panen produksi.", "");');
+				$this->session->set_flashdata('selamat','selamat();');
+				redirect(base_url('User/profile'));
+			}else {
+				$this->session->set_flashdata('alert','toastr.danger("Gagal melakukan konfirmasi panen produksi.", "");');
+				redirect(base_url('User/profile'));
+			}
+
 		}
-	}
-	public function kirim_kode_vemail()
-	{
-		$angka = round(microtime(true) * 1000);
-		$kode = substr($angka,-6);
-		$where = array(
-		'id_user' => $this->session->userdata('id'),
-		'del_flag' => "1",
-		);
-		$where2 = array(
-		'nama' => 'Email Gateway',
-		'del_flag' => "1",
-		);
-		$row1 = $this->M_admin->get_where("tb_user",$where)->row();
-		$smtp = $this->M_admin->get_where("tb_config",$where2)->row();
+		public function konfirmasi_gagal()
+		{
+			$data = array(
+				'tgl_panen' => date('Y-m-d',strtotime($this->input->post('tgl_panen'))),
+				'jml_panen' =>$this->input->post('jml_panen'),
+				'harga_perkilo_panen' =>$this->input->post('harga_perkilo_panen'),
+				'nilai_panen' =>$this->input->post('nilai_panen'),
+				'ket' =>sensor_text($this->input->post('ket')),
+				'mdate'=> date('Y-m-d H:i:s'),
+				'm_by'=> $this->session->userdata('level')." - ".$this->session->userdata('nama'),
+				'panen_flag'=> '2',
+			);
+			$update = $this->M_admin->update_data(array('id_produksi' => $this->input->post('id_produksi1')),$data,'tb_produksi');
+			if ($update) {
+			//log aktifitas
+				$log_aktifitas = array( 'keterangan'=>'Melakukan konfirmasi panen produksi','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+				$this->M_admin->insert_data('tb_log',$log_aktifitas);
+
+			//update point
+				$user = $this->M_admin->get_by_id_row('tb_user',array('id_user'=>$this->session->userdata('id')));
+				$admin = $this->db->limit(1)->get_where('tb_admin',array('id_kab' => $this->session->userdata('id_kab'), 'del_flag'=>'1' ))->row();
+				$cpoint = $this->db->get_where('tb_config_point',array('id_admin' => $admin->id_admin))->row();
+				$sisa = $user->point + $cpoint->point;
+				$this->M_admin->update_data(array('id_user' => $this->session->userdata('id')),array('point'=>$sisa),'tb_user');
+
+				$this->session->set_flashdata('alert','toastr.success("Berhasil melakukan konfirmasi panen produksi.", "");');
+				$this->session->set_flashdata('selamat','sedih();');
+				redirect(base_url('User/profile'));
+			}else {
+				$this->session->set_flashdata('alert','toastr.danger("Gagal melakukan konfirmasi panen produksi.", "");');
+				redirect(base_url('User/profile'));
+			}
+
+		}
+		public function modal_ktp($foto,$id,$par)
+		{
+			$data['foto_ktp']=$foto;
+			$data['par']=$par;
+			$data['id']=$id;
+			$tampilan = $this->load->view('User/pengguna/modal_ktp',$data, TRUE);
+			echo $tampilan;
+		}
+		public function update_peta()
+		{
+			$data = array(
+				'lt' => $this->input->post('lt'),
+				'lg'=>$this->input->post('lg'),
+				'mdate'=>date('Y-m-d H:i:s'),
+				'm_by' =>$this->session->userdata('level')." - ".$this->session->userdata('nama'),
+
+			);
+			$update = $this->M_admin->update_data(array('id_user' => $this->input->post('id')),$data,'tb_user');
+			if ($update) {
+			//log aktifitas
+				$log_aktifitas = array( 'keterangan'=>'Memperbaharui lokasi peta pengguna','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+				$this->M_admin->insert_data('tb_log',$log_aktifitas);
+
+				$this->session->set_flashdata('alert','toastr.success("Berhasil memperbaharui lokasi peta.", "");');
+				redirect(base_url('User/profile'));
+			}else {
+				$this->session->set_flashdata('alert','toastr.danger("Gagal memperbaharui lokasi peta.", "");');
+				redirect(base_url('User/profile'));
+			}
+		}
+		public function kirim_kode_vemail()
+		{
+			$angka = round(microtime(true) * 1000);
+			$kode = substr($angka,-6);
+			$where = array(
+				'id_user' => $this->session->userdata('id'),
+				'del_flag' => "1",
+			);
+			$where2 = array(
+				'nama' => 'Email Gateway',
+				'del_flag' => "1",
+			);
+			$row1 = $this->M_admin->get_where("tb_user",$where)->row();
+			$smtp = $this->M_admin->get_where("tb_config",$where2)->row();
 			$config = Array(
 				'protocol' => 'smtp',
 				'smtp_host' => $smtp->value3,
@@ -539,25 +659,25 @@ class User extends CI_Controller {
 				'smtp_pass' => $smtp->value2,
 				'mailtype' => 'html',
 				'charset' => 'iso-8859-1'
-			 );
+			);
 
-			 $this->load->library('email', $config);
-			 $this->email->set_newline("\r\n");
-			 $this->email->from($smtp->value1, 'Pemetaan Hasil Bumi');
-			 $this->email->to($row1->email);
-			 $this->email->subject('Verifikasi email');
-			 $this->email->message("Verifikasi email dari akun ".$this->session->userdata('nama').". <br> Kode verifikasi  : <b>".$kode."</b> <br> Kode verifikasi anda adalah privasi.");
-			 if (!$this->email->send()) {
-				 echo "0";
+			$this->load->library('email', $config);
+			$this->email->set_newline("\r\n");
+			$this->email->from($smtp->value1, 'Pemetaan Hasil Bumi');
+			$this->email->to($row1->email);
+			$this->email->subject('Verifikasi email');
+			$this->email->message("Verifikasi email dari akun ".$this->session->userdata('nama').". <br> Kode verifikasi  : <b>".$kode."</b> <br> Kode verifikasi anda adalah privasi.");
+			if (!$this->email->send()) {
+				echo "0";
 				 //show_error($this->email->print_debugger());
-		}else {
-			$update_key = array(
+			}else {
+				$update_key = array(
 					'v_email' => $kode,
 					'mdate'=>date('Y-m-d H:i:s'),
 					'm_by' =>$this->session->userdata('level')." - ".$this->session->userdata('nama'),
-			);
-			$where  = array('id_user' => $this->session->userdata('id'));
-			$this->M_admin->update_data($where,$update_key,'tb_user');
+				);
+				$where  = array('id_user' => $this->session->userdata('id'));
+				$this->M_admin->update_data($where,$update_key,'tb_user');
 			set_cookie('v_email', md5($kode), 300); // set expired 5 menit kedepan
 			echo "1";
 		}
@@ -593,12 +713,12 @@ class User extends CI_Controller {
 		$angka = round(microtime(true) * 1000);
 		$kode = substr($angka,-6);
 		$where = array(
-		'id_user' => $this->session->userdata('id'),
-		'del_flag' => "1",
+			'id_user' => $this->session->userdata('id'),
+			'del_flag' => "1",
 		);
 		$where2 = array(
-		'nama' => 'Sms Gateway',
-		'del_flag' => "1",
+			'nama' => 'Sms Gateway',
+			'del_flag' => "1",
 		);
 		$row1 = $this->M_admin->get_where("tb_user",$where)->row();
 		$sms = $this->M_admin->get_where("tb_config",$where2)->row();
@@ -675,19 +795,19 @@ class User extends CI_Controller {
 			'id_desa' => $this->input->post('id_desa'),
 			'v_email' =>$vemail,
 			'v_telp' =>$vtelp,
-		 );
-		 $update = $this->M_admin->update_data(array('id_user' =>$this->input->post('id_user') ),$data,'tb_user');
-	 		if ($update) {
+		);
+		$update = $this->M_admin->update_data(array('id_user' =>$this->input->post('id_user') ),$data,'tb_user');
+		if ($update) {
 				//log aktifitas
-				$log_aktifitas = array( 'keterangan'=>'Memperbaharui data personal pengguna','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
-				$this->M_admin->insert_data('tb_log',$log_aktifitas);
+			$log_aktifitas = array( 'keterangan'=>'Memperbaharui data personal pengguna','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+			$this->M_admin->insert_data('tb_log',$log_aktifitas);
 
-	 			$this->session->set_flashdata('alert','toastr.info("Berhasil memperbaharui data personal.", "");');
-	 			redirect(base_url('User/profile'));
-	 		}else {
-	 			$this->session->set_flashdata('alert','toastr.info("Gagal memperbaharui data personal.", "");');
-	 			redirect(base_url('User/profile'));
-	 		}
+			$this->session->set_flashdata('alert','toastr.info("Berhasil memperbaharui data personal.", "");');
+			redirect(base_url('User/profile'));
+		}else {
+			$this->session->set_flashdata('alert','toastr.info("Gagal memperbaharui data personal.", "");');
+			redirect(base_url('User/profile'));
+		}
 			//echo json_encode($data);
 	}
 	public function update_akun_user()
@@ -697,27 +817,27 @@ class User extends CI_Controller {
 		);
 		}else {
 			$data = array('username' => $this->input->post('username'),'password'=>md5($this->input->post('password')),'mdate'=>date('Y-m-d H:i:s'),
-							'm_by' =>$this->session->userdata('level')." - ".$this->session->userdata('nama'),
-						);
+				'm_by' =>$this->session->userdata('level')." - ".$this->session->userdata('nama'),
+			);
 		}
 
 		$update = $this->M_admin->update_data(array('id_user' =>$this->input->post('id') ),$data,'tb_user');
-		 if ($update) {
+		if ($update) {
 			 //log aktifitas
-			 $log_aktifitas = array( 'keterangan'=>'Memperbaharui akun profil','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
-			 $this->M_admin->insert_data('tb_log',$log_aktifitas);
+			$log_aktifitas = array( 'keterangan'=>'Memperbaharui akun profil','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+			$this->M_admin->insert_data('tb_log',$log_aktifitas);
 
-			 $sess = array(
-					 'username' => $this->input->post('username')
-			 );
-			 $this->session->set_userdata($sess);
+			$sess = array(
+				'username' => $this->input->post('username')
+			);
+			$this->session->set_userdata($sess);
 
-			 $this->session->set_flashdata('alert','toastr.info("Berhasil memperbaharui data akun.", "");');
-			 redirect(base_url('User/profile'));
-		 }else {
-			 $this->session->set_flashdata('alert','toastr.info("Gagal memperbaharui data akun.", "");');
-			 redirect(base_url('User/profile'));
-		 }
+			$this->session->set_flashdata('alert','toastr.info("Berhasil memperbaharui data akun.", "");');
+			redirect(base_url('User/profile'));
+		}else {
+			$this->session->set_flashdata('alert','toastr.info("Gagal memperbaharui data akun.", "");');
+			redirect(base_url('User/profile'));
+		}
 	}
 	public function update_foto_ktp()
 	{
@@ -729,69 +849,69 @@ class User extends CI_Controller {
 			$foto[1]=$this->input->post('foto_lama');
 		}
 
-			$data = array(
-				'foto_ktp' => $foto[1],
-				'v_ktp'=>NULL,
-				'mdate'=>date('Y-m-d H:i:s'),
-				'm_by' =>$this->session->userdata('level')." - ".$this->session->userdata('nama'),
-			);
+		$data = array(
+			'foto_ktp' => $foto[1],
+			'v_ktp'=>NULL,
+			'mdate'=>date('Y-m-d H:i:s'),
+			'm_by' =>$this->session->userdata('level')." - ".$this->session->userdata('nama'),
+		);
 
 
 		$update = $this->M_admin->update_data(array('id_user' =>$this->input->post('id') ),$data,'tb_user');
-		 if ($update) {
-			 if ($foto[0]==false) {
-				 $this->session->set_flashdata('gagal','toastr.error("Gagal dapat mengunggah foto.", "");');
-			 }
+		if ($update) {
+			if ($foto[0]==false) {
+				$this->session->set_flashdata('gagal','toastr.error("Gagal dapat mengunggah foto.", "");');
+			}
 			 //log aktifitas
 			 //log aktifitas
-			 $log_aktifitas = array( 'keterangan'=>'Memperbaharui data foto KTP','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
-			 $this->M_admin->insert_data('tb_log',$log_aktifitas);
+			$log_aktifitas = array( 'keterangan'=>'Memperbaharui data foto KTP','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+			$this->M_admin->insert_data('tb_log',$log_aktifitas);
 
-			 $this->session->set_flashdata('alert','toastr.info("Berhasil memperbaharui data akun.", "");');
-			 redirect(base_url('User/profile'));
-		 }else {
-			 $this->session->set_flashdata('alert','toastr.info("Gagal memperbaharui data akun.", "");');
-			 redirect(base_url('User/profile'));
-		 }
+			$this->session->set_flashdata('alert','toastr.info("Berhasil memperbaharui data akun.", "");');
+			redirect(base_url('User/profile'));
+		}else {
+			$this->session->set_flashdata('alert','toastr.info("Gagal memperbaharui data akun.", "");');
+			redirect(base_url('User/profile'));
+		}
 	}
 	public function update_foto_user()
 	{
 		$foto = $this->upload_img('img');
 		if ($foto[0]==true) {
 			$r_file =$this->input->post('foto_lama');
-	    unlink("./assets/uploads/$r_file");
+			unlink("./assets/uploads/$r_file");
 		}else {
 			$foto[1]=$this->input->post('foto_lama');
 		}
 
-			$data = array(
-				'foto' => $foto[1],
-				'mdate'=>date('Y-m-d H:i:s'),
-				'm_by' =>$this->session->userdata('level')." - ".$this->session->userdata('nama'),
-			);
+		$data = array(
+			'foto' => $foto[1],
+			'mdate'=>date('Y-m-d H:i:s'),
+			'm_by' =>$this->session->userdata('level')." - ".$this->session->userdata('nama'),
+		);
 
 
 		$update = $this->M_admin->update_data(array('id_user' =>$this->input->post('id') ),$data,'tb_user');
-		 if ($update) {
-			 if ($foto[0]==false) {
-				 $this->session->set_flashdata('gagal','toastr.error("Gagal dapat mengunggah foto.", "");');
-			 }
+		if ($update) {
+			if ($foto[0]==false) {
+				$this->session->set_flashdata('gagal','toastr.error("Gagal dapat mengunggah foto.", "");');
+			}
 			 //log aktifitas
 			 //log aktifitas
-			 $log_aktifitas = array( 'keterangan'=>'Memperbaharui data foto akun profil','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
-			 $this->M_admin->insert_data('tb_log',$log_aktifitas);
+			$log_aktifitas = array( 'keterangan'=>'Memperbaharui data foto akun profil','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+			$this->M_admin->insert_data('tb_log',$log_aktifitas);
 
-			 $this->session->set_flashdata('alert','toastr.info("Berhasil memperbaharui data akun.", "");');
-			 $sess = array(
-					 'foto' => $foto[1],
-			 );
-			 $this->session->set_userdata($sess);
-			 $this->session->set_flashdata('alert','toastr.info("Berhasil memperbaharui data akun.", "");');
-			 redirect(base_url('User/profile'));
-		 }else {
-			 $this->session->set_flashdata('alert','toastr.info("Gagal memperbaharui data akun.", "");');
-			 redirect(base_url('User/profile'));
-		 }
+			$this->session->set_flashdata('alert','toastr.info("Berhasil memperbaharui data akun.", "");');
+			$sess = array(
+				'foto' => $foto[1],
+			);
+			$this->session->set_userdata($sess);
+			$this->session->set_flashdata('alert','toastr.info("Berhasil memperbaharui data akun.", "");');
+			redirect(base_url('User/profile'));
+		}else {
+			$this->session->set_flashdata('alert','toastr.info("Gagal memperbaharui data akun.", "");');
+			redirect(base_url('User/profile'));
+		}
 	}
 	public function chat()
 	{
@@ -801,14 +921,14 @@ class User extends CI_Controller {
 
 
 		$data = array(
-		'chart' => false,
-		'map'=>false,
-		'kunjungan' => count($this->db->where('flag','1')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
-		'login_user' => count($this->db->where('flag','2')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
-		'login_admin' => count($this->db->where('flag','3')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
-		'chat_room' => $this->M_admin->get_all('tb_chat_room',array('del_flag' =>'1','user_id'=>$this->session->userdata('level')."-".$this->session->userdata('id')),'id_chat_room','desc'),
-		'user' => $this->M_admin->get_all('tb_user',array('del_flag' =>'1','pekerjaan' => $this->session->userdata('bidang'),'id_kab' => $this->session->userdata('id_kab')),'id_user','desc'),
-		'admin' => $this->M_admin->get_all('tb_admin',array('del_flag' =>'1','blokir'=>'0'),'id_admin','desc'),
+			'chart' => false,
+			'map'=>false,
+			'kunjungan' => count($this->db->where('flag','1')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
+			'login_user' => count($this->db->where('flag','2')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
+			'login_admin' => count($this->db->where('flag','3')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
+			'chat_room' => $this->M_admin->get_all('tb_chat_room',array('del_flag' =>'1','user_id'=>$this->session->userdata('level')."-".$this->session->userdata('id')),'id_chat_room','desc'),
+			'user' => $this->M_admin->get_all('tb_user',array('del_flag' =>'1','pekerjaan' => $this->session->userdata('bidang'),'id_kab' => $this->session->userdata('id_kab')),'id_user','desc'),
+			'admin' => $this->M_admin->get_all('tb_admin',array('del_flag' =>'1','blokir'=>'0'),'id_admin','desc'),
 
 		);
 		$this->template->user('User/pesan/chat',$data);
@@ -840,12 +960,12 @@ class User extends CI_Controller {
 		$data = array(
 			'chat' => $this->M_admin->get_all('tb_chat',array('del_flag' =>'1','room_id' => $room_id),'id_chat','desc') ,
 			'room_id' =>$room_id,
-	 );
+		);
 	 //log aktifitas
-	 $log_aktifitas = array( 'keterangan'=>'Membaca pesan chat','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
-	 $this->M_admin->insert_data('tb_log',$log_aktifitas);
+		$log_aktifitas = array( 'keterangan'=>'Membaca pesan chat','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+		$this->M_admin->insert_data('tb_log',$log_aktifitas);
 
-	 $this->load->view('User/pesan/box_chat',$data);
+		$this->load->view('User/pesan/box_chat',$data);
 	}
 	public function readChatReal($room_id)
 	{
@@ -856,8 +976,8 @@ class User extends CI_Controller {
 			}
 		}
 	 //log aktifitas
-	 $log_aktifitas = array( 'keterangan'=>'Membaca pesan chat','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
-	 $this->M_admin->insert_data('tb_log',$log_aktifitas);
+		$log_aktifitas = array( 'keterangan'=>'Membaca pesan chat','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+		$this->M_admin->insert_data('tb_log',$log_aktifitas);
 
 	}
 	public function openSideChat($id_user)
@@ -895,15 +1015,15 @@ class User extends CI_Controller {
 				'id'=>$id_user,
 				'level'=>false
 
-		 );
-	 }else {
-		 $data = array(
- 			'room_id' =>false,
-			'id'=>$id_user,
-			'level'=>false
+			);
+		}else {
+			$data = array(
+				'room_id' =>false,
+				'id'=>$id_user,
+				'level'=>false
 
- 	 );
-	 }
+			);
+		}
 		$this->load->view('User/open_chat',$data);
 	}
 	public function openSideChatReal($id_user,$room_id,$level)
@@ -919,22 +1039,22 @@ class User extends CI_Controller {
 				'id'=>$id_user,
 				'level'=>$lv
 
-		 );
-	 }else {
-		 $data = array(
-			'room_id' =>false,
-			'id'=>$id_user,
-			'level'=>false
-	 );
-	 }
+			);
+		}else {
+			$data = array(
+				'room_id' =>false,
+				'id'=>$id_user,
+				'level'=>false
+			);
+		}
 		$this->load->view('User/open_chat',$data);
 	}
 	public function isiSideChat($room_id)
 	{
-			$data = array(
-				'chat' => $this->M_admin->get_all('tb_chat',array('del_flag' =>'1','room_id' => $room_id),'id_chat','desc') ,
-		 );
-		 $this->load->view('User/isi_chat',$data);
+		$data = array(
+			'chat' => $this->M_admin->get_all('tb_chat',array('del_flag' =>'1','room_id' => $room_id),'id_chat','desc') ,
+		);
+		$this->load->view('User/isi_chat',$data);
 	}
 	public function send_chat()
 	{
@@ -949,8 +1069,8 @@ class User extends CI_Controller {
 			$insert=$this->M_admin->insert_data('tb_chat',$data);
 			if ($insert) {
 				//log aktifitas
-	      $log_aktifitas = array( 'keterangan'=>'Mengirim pesan chat','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
-	  		$this->M_admin->insert_data('tb_log',$log_aktifitas);
+				$log_aktifitas = array( 'keterangan'=>'Mengirim pesan chat','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+				$this->M_admin->insert_data('tb_log',$log_aktifitas);
 
 				$dt= array('msg'=>'sukses', 'id'=> $insert, 'room_id'=>$this->input->post('room_id'));
 				echo json_encode($dt);
@@ -976,8 +1096,8 @@ class User extends CI_Controller {
 			$insert=$this->M_admin->insert_data('tb_chat',$data);
 			if ($insert) {
 				//log aktifitas
-	      $log_aktifitas = array( 'keterangan'=>'Mengirim pesan chat','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
-	  		$this->M_admin->insert_data('tb_log',$log_aktifitas);
+				$log_aktifitas = array( 'keterangan'=>'Mengirim pesan chat','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+				$this->M_admin->insert_data('tb_log',$log_aktifitas);
 
 				$dt= array('msg'=>'sukses', 'id'=> $insert, 'room_id'=>$kode);
 				echo json_encode($dt);
@@ -1008,49 +1128,49 @@ class User extends CI_Controller {
 
 
 		$where = array('del_flag'=>"1");
-	  $jml  = $this->db->order_by('id_news','DESC')->get_where('tb_news',$where);
+		$jml  = $this->db->order_by('id_news','DESC')->get_where('tb_news',$where);
 	  // konfigurasi pagination
-	  $config['base_url'] = base_url().'User/blog';
-	  $config['total_rows'] = $jml->num_rows();
-	  $config['per_page'] = '6';
-	  $config['first_page'] = 'Awal';
-	  $config['last_page'] = 'Akhir';
-	  $config['next_page'] = '&laquo;';
-	  $config['prev_page'] = '&raquo;';
+		$config['base_url'] = base_url().'User/blog';
+		$config['total_rows'] = $jml->num_rows();
+		$config['per_page'] = '6';
+		$config['first_page'] = 'Awal';
+		$config['last_page'] = 'Akhir';
+		$config['next_page'] = '&laquo;';
+		$config['prev_page'] = '&raquo;';
 
-	  $config['use_page_numbers'] = TRUE;
-	  $config['reuse_query_string'] = TRUE;
+		$config['use_page_numbers'] = TRUE;
+		$config['reuse_query_string'] = TRUE;
 
-	  $config['full_tag_open'] = '<ul class="pagination pagination-lg">';
-	  $config['full_tag_close'] = '</ul>';
+		$config['full_tag_open'] = '<ul class="pagination pagination-lg">';
+		$config['full_tag_close'] = '</ul>';
 
-	  $config['first_link'] = '<i class="fa fa-angle-double-left"></i>';
-	  $config['first_tag_open'] = '<li>';
-	  $config['first_tag_close'] = '</li>';
+		$config['first_link'] = '<i class="fa fa-angle-double-left"></i>';
+		$config['first_tag_open'] = '<li>';
+		$config['first_tag_close'] = '</li>';
 
-	  $config['last_link'] = '<i class="fa fa-angle-double-right"></i>';
-	  $config['last_tag_open'] = '<li>';
-	  $config['last_tag_close'] = '</li>';
+		$config['last_link'] = '<i class="fa fa-angle-double-right"></i>';
+		$config['last_tag_open'] = '<li>';
+		$config['last_tag_close'] = '</li>';
 
-	  $config['next_link'] = '<i class="fa fa-angle-right"></i>';
-	  $config['next_tag_open'] = '<li>';
-	  $config['next_tag_close'] = '</li>';
+		$config['next_link'] = '<i class="fa fa-angle-right"></i>';
+		$config['next_tag_open'] = '<li>';
+		$config['next_tag_close'] = '</li>';
 
-	  $config['prev_link'] = '<i class="fa fa-angle-left"></i>';
-	  $config['prev_tag_open'] = '<li>';
-	  $config['prev_tag_close'] = '</li>';
+		$config['prev_link'] = '<i class="fa fa-angle-left"></i>';
+		$config['prev_tag_open'] = '<li>';
+		$config['prev_tag_close'] = '</li>';
 
-	  $config['cur_tag_open'] = '<li class="active"><a href="#">';
-	  $config['cur_tag_close'] = '<span class="sr-only">(current)</span></a></li>';
+		$config['cur_tag_open'] = '<li class="active"><a href="#">';
+		$config['cur_tag_close'] = '<span class="sr-only">(current)</span></a></li>';
 
-	  $config['num_tag_open'] = '<li>';
-	  $config['num_tag_close'] = '</li>';
+		$config['num_tag_open'] = '<li>';
+		$config['num_tag_close'] = '</li>';
 
 	 //inisialisasi config
-	  $this->pagination->initialize($config);
+		$this->pagination->initialize($config);
 
 	 //buat pagination
-	  $str_links = $this->pagination->create_links();
+		$str_links = $this->pagination->create_links();
 	  // $data['halaman'] = explode('&nbsp;',$str_links );
 		// //tamplikan data
   	// $data['blog'] = $this->M_admin->ambil_blog($config['per_page'], $id);
@@ -1064,7 +1184,7 @@ class User extends CI_Controller {
 			'halaman'=>explode('&nbsp;',$str_links ),
 			'warna' => array('style-primary-dark' , 'style-accent-dark','style-warning','style-accent','style-primary','style-gray-light','style-default-dark','style-gray-dark','style-default','style-success','style-info','style-danger','style-default-bright'),
 			'liblog'=>'<li class="active">Blog</li>'
-			);
+		);
 		$this->template->user('User/blog/myblog',$data);
 	}
 	public function blogtags($tags,$id=NULL)
@@ -1142,7 +1262,7 @@ class User extends CI_Controller {
 			'warna' => array('style-primary-dark' , 'style-accent-dark','style-warning','style-accent','style-primary','style-gray-light','style-default-dark','style-gray-dark','style-default','style-success','style-info','style-danger','style-default-bright'),
 			'liblog'=>'<li><a href="'.base_url().'User/blog">Blog</a></li><li class="active">Kategori '.$litags.'</li>'
 
-			);
+		);
 		$this->template->user('User/blog/myblog',$data);
 	}
 	public function detail_post($id)
@@ -1159,29 +1279,29 @@ class User extends CI_Controller {
 			'blog' => $this->M_admin->get_by_id_row('tb_news',array('id_news' => $id,'del_flag'=>'1' )) ,
 			'komentar' => $this->M_admin->get_by_id('tb_komentar',array('id_news' => $id,'del_flag'=>'1' )) ,
 
-			);
+		);
 		$this->template->user('User/blog/detail_blog',$data);
 	}
 	public function send_kometar()
 	{
 		$data = array(
-				'id_news' => $this->input->post('id_news'),
-				'isi' => sensor_text($this->input->post('isi',TRUE)),
-				'cdate' => date('Y-m-d H:i:s'),
-				'c_by' => $this->session->userdata('level').'-'.$this->session->userdata('id'),
-			 );
-			 $insert=$this->M_admin->insert_data('tb_komentar',$data);
-	 		if ($insert) {
+			'id_news' => $this->input->post('id_news'),
+			'isi' => sensor_text($this->input->post('isi',TRUE)),
+			'cdate' => date('Y-m-d H:i:s'),
+			'c_by' => $this->session->userdata('level').'-'.$this->session->userdata('id'),
+		);
+		$insert=$this->M_admin->insert_data('tb_komentar',$data);
+		if ($insert) {
 				//log aktifitas
-	      $log_aktifitas = array( 'keterangan'=>'Mengirim komentar pada blog berita','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
-	  		$this->M_admin->insert_data('tb_log',$log_aktifitas);
+			$log_aktifitas = array( 'keterangan'=>'Mengirim komentar pada blog berita','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+			$this->M_admin->insert_data('tb_log',$log_aktifitas);
 
-				$this->session->set_flashdata('alert','toastr.info("Berhasil menambahkan berita.", "");');
-				redirect(base_url('User/detail_post/'.$this->input->post('id_news')));
-			}else {
-				$this->session->set_flashdata('alert','toastr.error("Gagal menambahkan berita.", "");');
-				redirect(base_url('User/detail_post/'.$this->input->post('id_news')));
-			}
+			$this->session->set_flashdata('alert','toastr.info("Berhasil menambahkan berita.", "");');
+			redirect(base_url('User/detail_post/'.$this->input->post('id_news')));
+		}else {
+			$this->session->set_flashdata('alert','toastr.error("Gagal menambahkan berita.", "");');
+			redirect(base_url('User/detail_post/'.$this->input->post('id_news')));
+		}
 	}
 	public function deleteKomentar()
 	{
@@ -1204,46 +1324,46 @@ class User extends CI_Controller {
 
 
 
-			$p_panen= array();
-			$p_belum_panen= array();
-			$p_gagal_panen= array();
-			$ub_produksi=array();
-			$ub_produksi_gagal=array();
-			$ub_produksi_belum=array();
+		$p_panen= array();
+		$p_belum_panen= array();
+		$p_gagal_panen= array();
+		$ub_produksi=array();
+		$ub_produksi_gagal=array();
+		$ub_produksi_belum=array();
 
 
-			for ($i=1; $i <= 12; $i++) {
-				if ($i<= 9) {
-					$s='-0';
-				}else {
-					$s='-';
-				}
-
-					$dt_produksi = count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'1')->result());
-					 array_push($ub_produksi,$dt_produksi);
-					 $dt_produksi_gagal= count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'2')->result());
-						array_push($ub_produksi_gagal,$dt_produksi_gagal);
-						$dt_produksi_belum= count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'0')->result());
-	 					array_push($ub_produksi_belum,$dt_produksi_belum);
+		for ($i=1; $i <= 12; $i++) {
+			if ($i<= 9) {
+				$s='-0';
+			}else {
+				$s='-';
 			}
 
+			$dt_produksi = count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'1')->result());
+			array_push($ub_produksi,$dt_produksi);
+			$dt_produksi_gagal= count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'2')->result());
+			array_push($ub_produksi_gagal,$dt_produksi_gagal);
+			$dt_produksi_belum= count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'0')->result());
+			array_push($ub_produksi_belum,$dt_produksi_belum);
+		}
 
 
-			$sampai = date('n');
 
-			for ($i=1; $i <= $sampai; $i++) {
-				if ($i<= 9) {
-					$s='-0';
-				}else {
-					$s='-';
-				}
-				$dt_p_panen = count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'1')->result());
-				 array_push($p_panen,$dt_p_panen);
-				 $dt_p_belum_panen = count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'0')->result());
- 				 array_push($p_belum_panen,$dt_p_belum_panen);
-				 $dt_p_gagal_panen = count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'2')->result());
- 				 array_push($p_gagal_panen,$dt_p_gagal_panen);
+		$sampai = date('n');
+
+		for ($i=1; $i <= $sampai; $i++) {
+			if ($i<= 9) {
+				$s='-0';
+			}else {
+				$s='-';
 			}
+			$dt_p_panen = count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'1')->result());
+			array_push($p_panen,$dt_p_panen);
+			$dt_p_belum_panen = count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'0')->result());
+			array_push($p_belum_panen,$dt_p_belum_panen);
+			$dt_p_gagal_panen = count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'2')->result());
+			array_push($p_gagal_panen,$dt_p_gagal_panen);
+		}
 
 		$data = array(
 			'chart' => true,
@@ -1263,7 +1383,7 @@ class User extends CI_Controller {
 			'total_belum_panen'=>count($this->M_admin->get_all_by_iduser3($this->session->userdata('id'),'0')->result()),
 
 
-			);
+		);
 			 //echo json_encode($data['p_belum_panen']);
 
 		$this->template->user('User/laporan/laporan',$data);
@@ -1275,46 +1395,46 @@ class User extends CI_Controller {
 
 
 
-			$p_panen= array();
-			$p_belum_panen= array();
-			$p_gagal_panen= array();
-			$ub_produksi=array();
-			$ub_produksi_gagal=array();
-			$ub_produksi_belum=array();
+		$p_panen= array();
+		$p_belum_panen= array();
+		$p_gagal_panen= array();
+		$ub_produksi=array();
+		$ub_produksi_gagal=array();
+		$ub_produksi_belum=array();
 
 
-			for ($i=1; $i <= 12; $i++) {
-				if ($i<= 9) {
-					$s='-0';
-				}else {
-					$s='-';
-				}
-
-					$dt_produksi = count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'1')->result());
-					 array_push($ub_produksi,$dt_produksi);
-					 $dt_produksi_gagal= count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'2')->result());
-						array_push($ub_produksi_gagal,$dt_produksi_gagal);
-						$dt_produksi_belum= count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'0')->result());
-	 					array_push($ub_produksi_belum,$dt_produksi_belum);
+		for ($i=1; $i <= 12; $i++) {
+			if ($i<= 9) {
+				$s='-0';
+			}else {
+				$s='-';
 			}
 
+			$dt_produksi = count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'1')->result());
+			array_push($ub_produksi,$dt_produksi);
+			$dt_produksi_gagal= count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'2')->result());
+			array_push($ub_produksi_gagal,$dt_produksi_gagal);
+			$dt_produksi_belum= count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'0')->result());
+			array_push($ub_produksi_belum,$dt_produksi_belum);
+		}
 
 
-			$sampai = date('n');
 
-			for ($i=1; $i <= $sampai; $i++) {
-				if ($i<= 9) {
-					$s='-0';
-				}else {
-					$s='-';
-				}
-				$dt_p_panen = count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'1')->result());
-				 array_push($p_panen,$dt_p_panen);
-				 $dt_p_belum_panen = count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'0')->result());
- 				 array_push($p_belum_panen,$dt_p_belum_panen);
-				 $dt_p_gagal_panen = count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'2')->result());
- 				 array_push($p_gagal_panen,$dt_p_gagal_panen);
+		$sampai = date('n');
+
+		for ($i=1; $i <= $sampai; $i++) {
+			if ($i<= 9) {
+				$s='-0';
+			}else {
+				$s='-';
 			}
+			$dt_p_panen = count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'1')->result());
+			array_push($p_panen,$dt_p_panen);
+			$dt_p_belum_panen = count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'0')->result());
+			array_push($p_belum_panen,$dt_p_belum_panen);
+			$dt_p_gagal_panen = count($this->M_admin->get_all_by_iduser2($this->session->userdata('id'),date('Y').$s.$i,'2')->result());
+			array_push($p_gagal_panen,$dt_p_gagal_panen);
+		}
 
 		$data = array(
 			'chart' => true,
@@ -1334,7 +1454,7 @@ class User extends CI_Controller {
 			'total_belum_panen'=>count($this->M_admin->get_all_by_iduser3($this->session->userdata('id'),'0')->result()),
 
 
-			);
+		);
 			 //echo json_encode($data['p_belum_panen']);
 		$this->load->view('User/laporan/print_laporan',$data);
 	}
@@ -1360,8 +1480,99 @@ class User extends CI_Controller {
 			'sensor' => $this->M_admin->get_where('tb_sensor_text',array('del_flag' =>'1','_rule'=>'1' ))->result(),
 			'blok' => $this->M_admin->get_where('tb_sensor_text',array('del_flag' =>'1','_rule'=>'2' ))->result(),
 			'icon' => $this->M_admin->get_where('tb_icon_map',array('del_flag' =>'1'))->result(),
-			);
+		);
 		$this->template->user('User/pengaturan/pengaturan',$data);
+	}
+	public function point()
+	{
+		$server_load = array('load_name' => 'kunjungan','load_date'=> date('Y-m-d H:i:s'),'flag'=>'1' );
+		$this->M_admin->insert_data('tb_server_load',$server_load);
+
+
+
+		$data = array(
+			'chart' => false,
+			'map'=>false,
+			'kunjungan' => count($this->db->where('flag','1')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
+			'login_user' => count($this->db->where('flag','2')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
+			'login_admin' => count($this->db->where('flag','3')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
+			'hadiah' => $this->M_admin->hadiah_point($this->session->userdata('pekerjaan'),$this->session->userdata('id_kab'))->result(),
+			'tukar_point' => $this->db->from('tb_tukar_point')->where('id_user',$this->session->userdata('id'))->like('cdate',date('Y')."-")->get()->result(),
+		);
+		$this->template->user('User/point/point',$data);
+	}
+	public function tukar_hadiah()
+	{
+		$kode = round(microtime(true) * 1000);
+		$hadiah = $this->M_admin->get_by_id_row('tb_hadiah_point',array('id_hadiah_point'=>$this->input->post('id')));
+		$user = $this->M_admin->get_by_id_row('tb_user',array('id_user'=>$this->session->userdata('id')));
+		$sisa = $user->point - $hadiah->point;
+		if ($sisa < 0) {
+			echo "minus";
+		}else {
+			$data = array(
+				'id_user' => $this->session->userdata('id'),
+				'id_admin'=>$hadiah->id_admin,
+				'point_awal'=>$user->point,
+				'point_tukar'=>$hadiah->point,
+				'point_sisa'=>$sisa,
+				'hadiah'=>$hadiah->hadiah,
+				'cdate'=>date('Y-m-d H:i:s'),
+				'kode' =>$kode
+
+			);
+			$update = $this->M_admin->insert_data('tb_tukar_point',$data);
+			if ($update) {
+			//log aktifitas
+				$log_aktifitas = array( 'keterangan'=>'Menukar point','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+				$this->M_admin->insert_data('tb_log',$log_aktifitas);
+
+				$this->M_admin->update_data(array('id_user' => $this->session->userdata('id')),array('point'=>$sisa),'tb_user');
+
+				echo "sukses";
+			}else {
+				echo "gagal";
+			}
+		}
+	}
+	public function batal_tukar()
+	{
+		$tukar = $this->M_admin->get_by_id_row('tb_tukar_point',array('id_tukar_point'=>$this->input->post('id')));
+		$user = $this->M_admin->get_by_id_row('tb_user',array('id_user'=>$this->session->userdata('id')));
+		$sisa = $user->point + $tukar->point_tukar;
+
+		$data = array('flag_status'=>'2');
+		$update = $this->M_admin->update_data(array('id_tukar_point' => $this->input->post('id')),$data,'tb_tukar_point');
+		if ($update) {
+			//log aktifitas
+			$log_aktifitas = array( 'keterangan'=>'Menukar point','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+			$this->M_admin->insert_data('tb_log',$log_aktifitas);
+
+			$this->M_admin->update_data(array('id_user' => $this->session->userdata('id')),array('point'=>$sisa),'tb_user');
+
+			echo "sukses";
+		}else {
+			echo "gagal";
+		}
+	}
+	public function tiket($id='')
+	{
+		$tiket = $this->M_admin->get_by_id_row('tb_tukar_point',array('id_tukar_point'=>$id));
+		$admin = $this->M_admin->get_by_id_row('tb_admin',array('id_admin'=>$tiket->id_admin));
+		$user = $this->M_admin->get_by_id_row('tb_user',array('id_user'=>$this->session->userdata('id')));
+
+		$data = array(
+			'chart' => false,
+			'map'=>false,
+			'kunjungan' => count($this->db->where('flag','1')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
+			'login_user' => count($this->db->where('flag','2')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
+			'login_admin' => count($this->db->where('flag','3')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
+			'hadiah' => $this->M_admin->hadiah_point($this->session->userdata('pekerjaan'),$this->session->userdata('id_kab'))->result(),
+			'tiket' => $tiket,
+			'admin' => $admin,
+			'user'=>$user
+		);
+		$this->template->user('User/point/tiket',$data);
 	}
 	public function update_realtime_chat()
 	{
@@ -1373,7 +1584,7 @@ class User extends CI_Controller {
 		$data = array(
 			'value1' => $d,
 			'value2' => $this->input->post('value2'),
-		 );
+		);
 		$update = $this->M_admin->update_data(array('id_config' => $this->input->post('id')),$data,'tb_config');
 		if ($update) {
 			//log aktifitas
@@ -1392,7 +1603,7 @@ class User extends CI_Controller {
 		$query = $this->db->get_where('tb_wilayah_kabupaten',array('provinsi_id'=>$id_prov));
 		$data = "<option value=''>- Pilih Kabupaten -</option>";
 		foreach ($query->result() as $value) {
-				$data .= "<option value='".$value->id_kab."'>".$value->nama."</option>";
+			$data .= "<option value='".$value->id_kab."'>".$value->nama."</option>";
 		}
 		echo $data;
 	}
@@ -1412,28 +1623,28 @@ class User extends CI_Controller {
 			'kunjungan' => count($this->db->where('flag','1')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
 			'login_user' => count($this->db->where('flag','2')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
 			'login_admin' => count($this->db->where('flag','3')->like('load_date',date('Y-m-d'))->get('tb_server_load')->result()),
-			);
+		);
 		$this->template->user('User/bantuan',$data);
 	}
 
-public function upload_img($value)
-  {
-    $kode = round(microtime(true) * 1000);
-    $config['upload_path'] = './assets/uploads/';
-    $config['allowed_types'] = 'jpg|png|jpeg';
-    $config['max_size']	= '3000';
-    $config['file_name'] = $kode;
-    $this->upload->initialize($config);
-    if (!$this->upload->do_upload($value))
-        {
-          return array( false, '' );
-        }
-    else
-          {
-            $fn = $this->upload->data();
-            $nama = $fn['file_name'];
-            return array( true, $nama );
-          }
-  }
+	public function upload_img($value)
+	{
+		$kode = round(microtime(true) * 1000);
+		$config['upload_path'] = './assets/uploads/';
+		$config['allowed_types'] = 'jpg|png|jpeg';
+		$config['max_size']	= '3000';
+		$config['file_name'] = $kode;
+		$this->upload->initialize($config);
+		if (!$this->upload->do_upload($value))
+		{
+			return array( false, '' );
+		}
+		else
+		{
+			$fn = $this->upload->data();
+			$nama = $fn['file_name'];
+			return array( true, $nama );
+		}
+	}
 
 }

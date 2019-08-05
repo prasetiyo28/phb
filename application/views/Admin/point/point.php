@@ -44,8 +44,10 @@
                   <thead>
                     <tr>
                       <th class="sort-numeric">No</th>
+                      <th>Kode</th>
                       <th>Nama</th>
                       <th>Tukar Hadiah</th>
+                      <th>Status Tukar</th>
                       <th>Aksi</th>
                     </tr>
                   </thead>
@@ -53,11 +55,25 @@
                     <?php $no=0; foreach ($tukar_point as $g): $no++;?>
                     <tr>
                       <td><?php echo $no; ?></td>
-                      <td><?php echo $g->id_user ?></td>
+                      <td><?php echo $g->kode ?></td>
+                      <td><?php echo tampil_nama_user_by_id($g->id_user) ?> <br><?php echo tampil_nik_user_by_id($g->id_user) ?> </td>
                       <td><?php echo $g->hadiah ?></td>
                       <td>
-                        <button type="button" class="btn ink-reaction btn-floating-action btn-sm btn-success" onclick="terima(<?php echo $g->id_tukar_point; ?>)" ><i class="fa fa-check"></i></button>
-                        <button type="button" class="btn ink-reaction btn-floating-action btn-sm btn-danger" onclick="tolak(<?php echo $g->id_tukar_point; ?>)"><i class="fa fa-close"></i></button>
+                        <?php if ($g->flag_status=='0'): ?>
+                          Menunggu Persetujuan
+                        <?php elseif ($g->flag_status=='1'): ?>
+                          Penukaran Disetujui.
+                          <?php else: ?>
+                            Penukaran Dibatalkan
+                        <?php endif; ?>
+                      </td>
+                      <td>
+                        <td>
+                          <?php if ($g->flag_status=='0'): ?>
+                            <button type="button" class="btn ink-reaction btn-floating-action btn-sm btn-success" onclick="terima(<?php echo $g->id_tukar_point; ?>)" ><i class="fa fa-check"></i></button>
+                            <button type="button" class="btn ink-reaction btn-floating-action btn-sm btn-danger" onclick="tolak(<?php echo $g->id_tukar_point; ?>)"><i class="fa fa-close"></i></button>
+                          <?php endif; ?>
+                        </td>
                       </td>
                     </tr>
                   <?php endforeach; ?>
@@ -307,7 +323,7 @@ function deleteAct(id,str) {
             toastr.clear();
             toastr.options.progressBar = false;
             toastr.options.timeOut = 2000;
-            toastr.success('Berhasil menghapus data', '');
+            toastr.success('Berhasil', '');
             setTimeout(function () {
               window.location.reload();
             }, 2000);
@@ -317,7 +333,7 @@ function deleteAct(id,str) {
             toastr.clear();
             toastr.options.progressBar = false;
             toastr.options.timeOut = 2000;
-            toastr.error('Gagal menghapus data. Coba lagi.', '');
+            toastr.error('Gagal. Coba lagi.', '');
           }
           else{alert(data);}
         },
@@ -352,7 +368,7 @@ function tukarAct(id,str) {
             toastr.clear();
             toastr.options.progressBar = false;
             toastr.options.timeOut = 2000;
-            toastr.success('Berhasil menghapus data', '');
+            toastr.success('Berhasil', '');
             setTimeout(function () {
               window.location.reload();
             }, 2000);
@@ -362,7 +378,7 @@ function tukarAct(id,str) {
             toastr.clear();
             toastr.options.progressBar = false;
             toastr.options.timeOut = 2000;
-            toastr.error('Gagal menghapus data. Coba lagi.', '');
+            toastr.error('Gagal. Coba lagi.', '');
           }
           else{alert(data);}
         },

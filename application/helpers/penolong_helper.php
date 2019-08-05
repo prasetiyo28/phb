@@ -310,7 +310,19 @@ function tampil_nama_user_by_id($id)
     return $stmt;
   }
 }
-
+function tampil_nik_user_by_id($id)
+{
+  $ci =& get_instance();
+  $ci->load->database();
+  $result = $ci->db->select('*')
+                    ->from('tb_user')
+                    ->where('id_user',$id)
+                    ->get();
+  foreach ($result->result() as $c) {
+    $stmt= $c->nik;
+    return $stmt;
+  }
+}
 function tampil_kec($id)
 {
   $ci =& get_instance();
@@ -358,6 +370,16 @@ function ttl_blog_today()
                     ->from('tb_news')
                     ->like('cdate',date('Y-m-d'))
                     ->where('del_flag','1')
+                    ->get();
+    return count($result->result());
+}
+function notif_trans_point()
+{
+  $ci =& get_instance();
+  $ci->load->database();
+  $result = $ci->db->select('*')
+                    ->from('tb_tukar_point')
+                    ->where('flag_status','0')
                     ->get();
     return count($result->result());
 }

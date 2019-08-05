@@ -27,4 +27,11 @@ class Template {
         $this->_CI->load->view('template/template', $data);
     }
 
+    function wirausahawan($template, $data = null) {
+        $data['content'] = $this->_CI->load->view($template, $data, true);
+        $data['header'] = $this->_CI->load->view('template/header_wirausahawan', $data, true);
+        $data['menubar'] = $this->_CI->load->view('template/menubar_wirausahawan', $data, true);
+        $this->_CI->load->view('template/template', $data);
+    }
+
 }

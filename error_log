@@ -1,0 +1,2 @@
+[10-Nov-2018 09:09:51 Asia/Jakarta] PHP Fatal error:  Call to undefined function setArray2XML() in /home/sliy8438/public_html/phb/application/controllers/Api_capil.php on line 146
+[10-Nov-2018 09:11:44 Asia/Jakarta] PHP Fatal error:  Call to undefined function setArray2XML() in /home/sliy8438/public_html/phb/application/controllers/Api_capil.php on line 146
