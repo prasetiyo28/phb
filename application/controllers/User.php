@@ -97,7 +97,7 @@ class User extends CI_Controller {
 
 			//update point
 			$user = $this->M_admin->get_by_id_row('tb_user',array('id_user'=>$this->session->userdata('id')));
-			$admin = $this->db->limit(1)->get_where('tb_admin',array('id_kab' => $this->session->userdata('id_kab'), 'del_flag'=>'1' ))->row();
+			$admin = $this->db->limit(1)->get_where('tb_admin',array('id_kab' => $this->session->userdata('id_kab'),'bidang' => $this->session->userdata('pekerjaan'), 'del_flag'=>'1', 'level'=>'1' ))->row();
 			$cpoint = $this->db->get_where('tb_config_point',array('id_admin' => $admin->id_admin))->row();
 			$sisa = $user->point + $cpoint->point;
 			$this->M_admin->update_data(array('id_user' => $this->session->userdata('id')),array('point'=>$sisa),'tb_user');
@@ -109,6 +109,8 @@ class User extends CI_Controller {
 			redirect(base_url('User/peta'));
 		}
 	}
+
+
 
 	public function tambah_catatan($value='')
 	{
