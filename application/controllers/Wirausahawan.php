@@ -327,7 +327,8 @@ class Wirausahawan extends CI_Controller {
 		if ($cek->num_rows() > 0) {
 			$kupon = $cek->row();
 			if ($kupon->reedemby == null) {
-				$data = array('reedemby' => $this->session->userdata('id') );
+				$data = array('reedemby' => $this->session->userdata('id'),
+					'flag_status' => '2' );
 				$update = $this->M_admin->update_data(array('kode' => $this->input->post('kode')),$data,'tb_tukar_point');
 				if ($update) {
 			//log aktifitas
