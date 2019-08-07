@@ -1619,7 +1619,7 @@ class Wirausahawan extends CI_Controller {
 			'blok' => $this->M_admin->get_where('tb_sensor_text',array('del_flag' =>'1','_rule'=>'2' ))->result(),
 			'icon' => $this->M_admin->get_where('tb_icon_map',array('del_flag' =>'1'))->result(),
 		);
-		$this->template->user('User/pengaturan/pengaturan',$data);
+		$this->template->wirausahawan('Wirausahawan/pengaturan/pengaturan',$data);
 	}
 	public function point()
 	{
@@ -1712,28 +1712,23 @@ class Wirausahawan extends CI_Controller {
 		);
 		$this->template->user('User/point/tiket',$data);
 	}
-	public function update_realtime_chat()
+	public function ganti_password()
 	{
-		if ($this->input->post('value1')[0]=='true') {
-			$d='true';
-		}else {
-			$d='false';
-		}
+		
 		$data = array(
-			'value1' => $d,
-			'value2' => $this->input->post('value2'),
+			'password' => md5($this->input->post('password')),
 		);
-		$update = $this->M_admin->update_data(array('id_config' => $this->input->post('id')),$data,'tb_config');
+		$update = $this->M_admin->update_data(array('id_wirausahawan' => $this->session->userdata('id')),$data,'tb_wirausahawan');
 		if ($update) {
 			//log aktifitas
-			$log_aktifitas = array( 'keterangan'=>'Memperbaharui data Realtime chat','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+			$log_aktifitas = array( 'keterangan'=>'Memperbaharui password','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
 			$this->M_admin->insert_data('tb_log',$log_aktifitas);
 
-			$this->session->set_flashdata('alert','toastr.info("Berhasil memperbaharui data Realtime chat.", "");');
-			redirect(base_url('User/pengaturan'));
+			$this->session->set_flashdata('alert','toastr.info("Berhasil memperbaharui password.", "");');
+			redirect(base_url('Wirausahawan/pengaturan'));
 		}else {
-			$this->session->set_flashdata('alert','toastr.info("Gagal memperbaharui data Realtime chat.", "");');
-			redirect(base_url('User/pengaturan'));
+			$this->session->set_flashdata('alert','toastr.info("Gagal memperbaharui password.", "");');
+			redirect(base_url('Wirausahawan/pengaturan'));
 		}
 
 	}

@@ -326,7 +326,7 @@ class User extends CI_Controller {
 				'produksi'=> $this->M_admin->get_all_lap_produksi_by_iduser2($id)->result(),
 				'produksi_select'=> $this->M_admin->get_all_select_produksi($id)->result(),
 				'p_panen'=>$p_panen,
-				'catatan'=>$this->M_admin->ambil_catatan($id,'10s',null)->result(),
+				'catatan'=>$this->M_admin->ambil_catatan($id,'10',null)->result(),
 				'panen'=>$this->M_admin->ambil_history_panen($id,'5',null)->result(),
 				'log'=>$this->M_admin->ambil_log_user('10', null),
 
@@ -1503,6 +1503,22 @@ class User extends CI_Controller {
 		);
 		$this->template->user('User/point/point',$data);
 	}
+
+	public function deleteCatatan()
+	{
+		$data = array('deleted' => '1' );
+		$update = $this->M_admin->update_data(array('id_catatan' => $this->input->post('id_catatan')),$data,'tb_catatan');
+		if ($update) {
+			//log aktifitas
+			$log_aktifitas = array( 'keterangan'=>'Menghapus data Catatan','nama' => $this->session->userdata('nama'),'jabatan' => $this->session->userdata('level'),'date'=> date('Y-m-d H:i:s'),'id'=>$this->session->userdata('id') );
+			$this->M_admin->insert_data('tb_log',$log_aktifitas);
+
+			echo "sukses";
+		}else {
+			echo "gagal";
+		}
+	}
+
 	public function tukar_hadiah()
 	{
 		$kode = round(microtime(true) * 1000);

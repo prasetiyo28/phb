@@ -24,6 +24,11 @@ class M_admin extends CI_Model{
     return $this->db->insert_id();
 }
 
+public function hapus_catatan($id){
+	$this->db->where('id_catatan',$id);
+	return $this->db->delete('tb_catatan');
+}
+
 public function get_by_id($table,$where)
 {
 	$query = $this->db->get_where($table,$where);
@@ -445,9 +450,10 @@ public function ambil_history_panen($id,$num, $offset)
 
 public function ambil_catatan($id,$num, $offset)
 {
-	return $this->db->select('tb_produksi.jenis_produksi,tb_catatan.tanggal,tb_catatan.catatan,tb_catatan.pengeluaran,tb_catatan.id_catatan')
+	return $this->db->select('tb_produksi.jenis_produksi,tb_catatan.tanggal,tb_catatan.catatan,tb_catatan.pengeluaran,tb_catatan.id_catatan,tb_produksi.panen_flag')
 	->join('tb_produksi','tb_catatan.id_produksi = tb_produksi.id_produksi')
 	->where('tb_catatan.id_user',$id)
+	->where('tb_catatan.deleted','0')
 	->get('tb_catatan',$num, $offset);
 }
 public function get_keuangan($id)

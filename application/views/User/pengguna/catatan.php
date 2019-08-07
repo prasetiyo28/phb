@@ -163,8 +163,10 @@
 																			
 
 																			<td>
-																				<button type="button" class="btn ink-reaction btn-floating-action btn-sm btn-primary" onclick="edit_hadiah(<?php echo $g->id_catatan; ?>)" ><i class="fa fa-pencil"></i></button>
-																				<button type="button" class="btn ink-reaction btn-floating-action btn-sm btn-danger" onclick="delete_catatan(<?php echo $g->id_catatan; ?>)"><i class="fa fa-trash"></i></button>
+																				<?php if ($g->panen_flag < 1): ?>
+																					<button type="button" class="btn ink-reaction btn-floating-action btn-sm btn-danger" onclick="delete_catatan(<?php echo $g->id_catatan; ?>)"><i class="fa fa-trash"></i></button>																					
+																				<?php endif ?>
+
 																			</td>
 																		</tr>
 																	<?php endforeach; ?>
@@ -319,7 +321,57 @@
 			<?php $this->load->view('User/pengguna/modal_produksi') ?>
 
 			<script type="text/javascript">
+				function delete_catatan(id) {
+					NewToastStyle();
 
+					var message = 'Anda akan menghapus data ini?. <button type="button" onclick="deleteAct('+id+',1)" class="btn btn-flat btn-primary toastr-action">YA</button>';
+					toastr.info(message, '');
+				}
+
+				function deleteAct(id,str) {
+					var data = new FormData();
+					if (str=='1') {
+						data.append('id_catatan', id);
+						var url = "<?php echo base_url('User/deleteCatatan/'); ?>";
+					}
+					$.ajax(
+					{
+						type: "POST",
+						url: url,
+						data: data,
+						processData: false,
+						contentType: false,
+						success: function(data)
+						{
+							if (data=='sukses')
+							{
+
+								toastr.clear();
+								toastr.options.progressBar = false;
+								toastr.options.timeOut = 2000;
+								toastr.success('Berhasil menghapus data', '');
+								setTimeout(function () {
+									window.location.reload();
+								}, 2000);
+							}
+							else if(data=='gagal')
+							{
+								toastr.clear();
+								toastr.options.progressBar = false;
+								toastr.options.timeOut = 2000;
+								toastr.error('Gagal menghapus data. Coba lagi.', '');
+							}
+							else{alert(data);}
+						},
+						error:function(data)
+						{
+							toastr.clear();
+							toastr.options.progressBar = false;
+							toastr.options.timeOut = 2000;
+							toastr.warning('Terjadi kesalahan!!! Coba lagi.', '');
+						}
+					});
+				}
 
 				$(document).ready(function(){
 
